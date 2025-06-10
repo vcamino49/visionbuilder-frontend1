@@ -1,29 +1,20 @@
+
 import React, { useState } from 'react';
 import './App.css';
 
 function App() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [prompt, setPrompt] = useState('');
+  const [result, setResult] = useState(null);
   const [image, setImage] = useState(null);
 
-  const backendUrl = 'https://visionbuilder-backend-v4-1.onrender.com';
-
-  const sendMessage = async () => {
-    if (!input) return;
-
-    const newMessage = { role: 'user', content: input };
-    setMessages([...messages, newMessage]);
-
-    const res = await fetch(`${backendUrl}/api/generate`, {
+  const handleGenerate = async () => {
+    const res = await fetch('https://visionbuilder-backend-v4-1.onrender.com/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: input })
+      body: JSON.stringify({ prompt })
     });
-
     const data = await res.json();
-    const botReply = { role: 'assistant', content: data.text || 'No response.' };
-    setMessages([...messages, newMessage, botReply]);
-    setInput('');
+    setResult(data);
   };
 
   const handleUpload = async (e) => {
@@ -31,7 +22,7 @@ function App() {
     const formData = new FormData();
     formData.append('image', file);
 
-    const res = await fetch(`${backendUrl}/api/upload`, {
+    const res = await fetch('https://visionbuilder-backend-v4-1.onrender.com/api/upload', {
       method: 'POST',
       body: formData
     });
@@ -40,20 +31,14 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      <h1>Vision Builder</h1>
-      <div className="chat-window">
-        {messages.map((msg, i) => (
-          <div key={i} className={`message ${msg.role}`}>
-            <strong>{msg.role === 'user' ? 'You' : 'Vision Builder'}:</strong> {msg.content}
-          </div>
-        ))}
-      </div>
-      <div className="controls">
-        <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type your design request..." />
-        <button onClick={sendMessage}>Send</button>
-      </div>
+    <div className="App">
+      <h1>VisionBuilder</h1>
+      <input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Enter design prompt..." />
+      <button onClick={handleGenerate}>Generate</button>
+      <br />
       <input type="file" onChange={handleUpload} />
+      <br />
+      {result && <div><h3>Response:</h3><p>{result.text}</p><img src={result.image_url} alt="Generated" width="300" /></div>}
       {image && <div><h3>Uploaded Image:</h3><img src={image} alt="Uploaded" width="300" /></div>}
     </div>
   );
